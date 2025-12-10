@@ -123,18 +123,42 @@
 }
 `;
 
+            // Apply changes live to the page
+            document.documentElement.style.setProperty('--bg-gradient', `linear-gradient(135deg, ${bgStart} 0%, ${bgEnd} 100%)`);
+            document.documentElement.style.setProperty('--primary-btn', primaryBtn);
+            document.documentElement.style.setProperty('--secondary-btn', secondaryBtn);
+            document.documentElement.style.setProperty('--bot-bg', botBg);
+            document.documentElement.style.setProperty('--user-bg', userBg);
+            document.documentElement.style.setProperty('--text-color', textColor);
+            document.documentElement.style.setProperty('--link-color', linkColor);
+            document.body.style.fontFamily = fontFamily;
+
+            // Update title
+            document.title = title;
+            const h1 = document.querySelector('h1');
+            if (h1) {
+                h1.textContent = title;
+                if (logo) {
+                    const img = document.createElement('img');
+                    img.src = logo;
+                    img.style.maxHeight = '50px';
+                    img.style.marginLeft = '10px';
+                    h1.appendChild(img);
+                }
+            }
+
             // Update preview
             const preview = document.getElementById('previewContent');
             preview.innerHTML = `
-                <div style="background: linear-gradient(135deg, ${bgStart} 0%, ${bgEnd} 100%); padding: 20px; border-radius: 10px; color: white;">
-                    <h2 style="margin: 0; font-family: ${fontFamily};">${title}</h2>
+                <div style="background: var(--bg-gradient); padding: 20px; border-radius: 10px; color: white;">
+                    <h2 style="margin: 0; font-family: var(--font-family);">${title}</h2>
                     ${logo ? `<img src="${logo}" alt="Logo" style="max-height: 50px; margin-top: 10px;">` : ''}
                 </div>
                 <div style="margin-top: 20px;">
-                    <div style="background: ${botBg}; padding: 10px; border-radius: 10px; margin: 5px; max-width: 70%;">Bot message example</div>
-                    <div style="background: ${userBg}; color: white; padding: 10px; border-radius: 10px; margin: 5px; margin-left: auto; max-width: 70%; text-align: right;">User message example</div>
-                    <button style="background: ${primaryBtn}; color: white; border: none; padding: 10px; border-radius: 5px; margin: 5px;">Primary Button</button>
-                    <button style="background: ${secondaryBtn}; color: white; border: none; padding: 10px; border-radius: 5px; margin: 5px;">Secondary Button</button>
+                    <div style="background: var(--bot-bg); padding: 10px; border-radius: 10px; margin: 5px; max-width: 70%;">Bot message example</div>
+                    <div style="background: var(--user-bg); color: white; padding: 10px; border-radius: 10px; margin: 5px; margin-left: auto; max-width: 70%; text-align: right;">User message example</div>
+                    <button style="background: var(--primary-btn); color: white; border: none; padding: 10px; border-radius: 5px; margin: 5px;">Primary Button</button>
+                    <button style="background: var(--secondary-btn); color: white; border: none; padding: 10px; border-radius: 5px; margin: 5px;">Secondary Button</button>
                 </div>
             `;
         }
