@@ -27,6 +27,10 @@
 <body>
     <div class="container">
         <h1>StepBot Question Editor</h1>
+        <div class="form-group">
+            <label>Welcome Message:</label>
+            <textarea id="welcomeMessage" placeholder="Enter welcome message..."></textarea>
+        </div>
         <button onclick="loadQuestions()" class="save-btn">Load Current Questions</button>
         <button onclick="addQuestion()" class="add-btn">Add New Question</button>
         <button onclick="downloadQuestions()" class="download-btn">Download Updated Questions</button>
@@ -35,12 +39,16 @@
 
     <script>
         let questions = [];
+        let welcomeMessage = '';
 
         async function loadQuestions() {
             try {
                 const response = await fetch('../help.txt');
                 const text = await response.text();
-                questions = parseQuestions(text);
+                const result = parseQuestions(text);
+                questions = result.questions;
+                welcomeMessage = result.welcome;
+                document.getElementById('welcomeMessage').value = welcomeMessage;
                 displayQuestions();
             } catch (error) {
                 alert('Error loading questions: ' + error.message);
@@ -48,28 +56,38 @@
         }
 
         function parseQuestions(text) {
-            const blocks = text.split('\n\n').filter(block => block.trim());
+            const lines = text.split('\n').map(line => line.trim());
+            let welcome = '';
             const data = [];
-            blocks.forEach(block => {
-                const lines = block.split('\n').map(line => line.trim());
-                let item = { question: '', keys: '', answer: '', multiAnswer: '', steps: [] };
-                lines.forEach(line => {
-                    if (line.startsWith('Question>:')) {
-                        item.question = line.substring(11).trim();
-                    } else if (line.startsWith('Key>:')) {
-                        item.keys = line.substring(6).trim();
-                    } else if (line.startsWith('Answer>:')) {
-                        item.answer = line.substring(8).trim();
-                    } else if (line.startsWith('Multi-Answer>:')) {
-                        item.multiAnswer = line.substring(14).trim();
-                    } else if (line.match(/^Step \d+ of \d+>:/)) {
-                        const stepText = line.split('>:')[1].trim();
-                        item.steps.push(stepText);
+            let currentItem = null;
+
+            lines.forEach(line => {
+                if (line.startsWith('Welcome>:')) {
+                    welcome = line.substring(10).trim();
+                } else if (line.startsWith('Question>:')) {
+                    if (currentItem) data.push(currentItem);
+                    currentItem = { question: line.substring(11).trim(), keys: [], answer: '', multiAnswer: '', steps: [] };
+                } else if (line.startsWith('Key>:')) {
+                    if (currentItem) {
+                        currentItem.keys = line.substring(6).trim().split(',').map(k => k.trim().toLowerCase());
                     }
-                });
-                if (item.question) data.push(item);
+                } else if (line.startsWith('Answer>:')) {
+                    if (currentItem) {
+                        currentItem.answer = line.substring(8).trim();
+                    }
+                } else if (line.startsWith('Multi-Answer>:')) {
+                    if (currentItem) {
+                        currentItem.multiAnswer = line.substring(14).trim();
+                    }
+                } else if (line.match(/^Step \d+ of \d+>:/)) {
+                    if (currentItem) {
+                        const stepText = line.split('>:')[1].trim();
+                        currentItem.steps.push(stepText);
+                    }
+                }
             });
-            return data;
+            if (currentItem) data.push(currentItem);
+            return { questions: data, welcome };
         }
 
         function displayQuestions() {
@@ -164,6 +182,10 @@
 
         function downloadQuestions() {
             let text = '';
+            const welcome = document.getElementById('welcomeMessage').value.trim();
+            if (welcome) {
+                text += `Welcome>: ${welcome}\n\n`;
+            }
             questions.forEach(q => {
                 if (q.question.trim()) {
                     text += `Question>: ${q.question}\n`;

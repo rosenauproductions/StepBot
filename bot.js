@@ -1,10 +1,14 @@
 let helpData = [];
+let welcomeMessage = '';
 let currentState = null;
 let thinkingElement = null;
 let sessions = {}; // Store sessions by ticket
 
 window.onload = async () => {
     await loadHelpData();
+    if (welcomeMessage) {
+        addMessage(welcomeMessage, 'bot');
+    }
     loadState();
     if (currentState) {
         showContinueOption();
@@ -34,28 +38,37 @@ async function loadHelpData() {
 }
 
 function parseHelpText(text) {
-    const blocks = text.split('\n\n').filter(block => block.trim());
+    const lines = text.split('\n').map(line => line.trim());
+    welcomeMessage = '';
     const data = [];
-    blocks.forEach(block => {
-        const lines = block.split('\n').map(line => line.trim());
-        let item = {};
-        lines.forEach(line => {
-            if (line.startsWith('Question>:')) {
-                item.question = line.substring(11).trim();
-            } else if (line.startsWith('Key>:')) {
-                item.keys = line.substring(6).trim().split(',').map(k => k.trim().toLowerCase());
-            } else if (line.startsWith('Answer>:')) {
-                item.answer = line.substring(8).trim();
-            } else if (line.startsWith('Multi-Answer>:')) {
-                item.multiAnswer = line.substring(14).trim();
-            } else if (line.match(/^Step \d+ of \d+>:/)) {
-                if (!item.steps) item.steps = [];
-                const stepText = line.split('>:')[1].trim();
-                item.steps.push(stepText);
+    let currentItem = null;
+
+    lines.forEach(line => {
+        if (line.startsWith('Welcome>:')) {
+            welcomeMessage = line.substring(10).trim();
+        } else if (line.startsWith('Question>:')) {
+            if (currentItem) data.push(currentItem);
+            currentItem = { question: line.substring(11).trim(), keys: [], answer: '', multiAnswer: '', steps: [] };
+        } else if (line.startsWith('Key>:')) {
+            if (currentItem) {
+                currentItem.keys = line.substring(6).trim().split(',').map(k => k.trim().toLowerCase());
             }
-        });
-        if (item.question) data.push(item);
+        } else if (line.startsWith('Answer>:')) {
+            if (currentItem) {
+                currentItem.answer = line.substring(8).trim();
+            }
+        } else if (line.startsWith('Multi-Answer>:')) {
+            if (currentItem) {
+                currentItem.multiAnswer = line.substring(14).trim();
+            }
+        } else if (line.match(/^Step \d+ of \d+>:/)) {
+            if (currentItem) {
+                const stepText = line.split('>:')[1].trim();
+                currentItem.steps.push(stepText);
+            }
+        }
     });
+    if (currentItem) data.push(currentItem);
     return data;
 }
 

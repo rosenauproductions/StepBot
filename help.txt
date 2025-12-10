@@ -1,3 +1,5 @@
+Welcome>: Welcome to StepBot! I'm here to help you with Canvas. What can I assist you with today?
+
 Question>: How do I log in to Canvas?
 Key>: login, sign in, access, password, username
 Answer>: To log in to Canvas, navigate to the login page, enter your username and password, then click the login button. If you forgot your password, use the "Forgot Password" link.
