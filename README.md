@@ -16,7 +16,7 @@ This project is a standalone help bot designed for embedding in Canvas LMS. It u
 - Easy-to-edit text file format for content management
 - Admin panel at `/admin` with question editor and theme generator
 - Theme support with customizable colors, fonts, logo, and title
-- Multi-site deployment: supports custom content per subdirectory (e.g., /site1 uses /site1/help.txt and /site1/theme.css)
+- Multi-site deployment: supports custom content per subdirectory or via GitHub forks for separate deployments
 - Downloadable tools for admins to customize and export content/themes
 - HTML formatting support in answers and steps
 
@@ -75,6 +75,31 @@ Step 3 of 3>: Final step text.
 4. Use the site URL for embedding
 
 For Canvas embedding, use the deployment URL in an iframe.
+
+## Multi-Site Deployment with GitHub Forks
+
+For easy management of multiple StepBot instances with different content:
+
+1. **Fork the Repository:**
+   - Go to https://github.com/rosenauproductions/StepBot
+   - Click "Fork" in the top right
+   - Create a new repository (e.g., `my-school-stepbot`)
+
+2. **Customize Your Fork:**
+   - Clone your forked repository
+   - Edit `help.txt` with your custom questions
+   - Edit `theme.css` with your custom theme (generate via `/admin/themes.html`)
+   - Commit and push changes
+
+3. **Deploy Your Fork:**
+   - Connect your forked repository to Vercel or Netlify
+   - Deploy as a separate site
+   - Use the unique URL for your Canvas course
+
+4. **Benefits:**
+   - Each site has its own repository and deployment
+   - Easy updates by merging from the main repository
+   - Isolated customizations per site
 
 ## Contributing
 
