@@ -1,5 +1,7 @@
 let helpData = [];
 let currentState = null;
+let thinkingElement = null;
+let sessions = {}; // Store sessions by ticket
 
 window.onload = async () => {
     await loadHelpData();
@@ -7,6 +9,7 @@ window.onload = async () => {
     if (currentState) {
         showContinueOption();
     }
+    showResumeOption();
 };
 
 async function loadHelpData() {
@@ -46,24 +49,48 @@ function parseHelpText(text) {
 }
 
 function loadState() {
-    const saved = localStorage.getItem('stepbot_state');
+    const saved = localStorage.getItem('stepbot_sessions');
     if (saved) {
-        currentState = JSON.parse(saved);
+        sessions = JSON.parse(saved);
+    }
+    const currentTicket = localStorage.getItem('stepbot_current_ticket');
+    if (currentTicket && sessions[currentTicket]) {
+        currentState = sessions[currentTicket];
     }
 }
 
 function saveState() {
-    if (currentState) {
-        localStorage.setItem('stepbot_state', JSON.stringify(currentState));
+    localStorage.setItem('stepbot_sessions', JSON.stringify(sessions));
+    if (currentState && currentState.ticket) {
+        localStorage.setItem('stepbot_current_ticket', currentState.ticket);
+        sessions[currentState.ticket] = currentState;
     } else {
-        localStorage.removeItem('stepbot_state');
+        localStorage.removeItem('stepbot_current_ticket');
     }
 }
 
 function clearMemory() {
     currentState = null;
     saveState();
-    addMessage('Memory cleared.', 'bot');
+    addMessage('Session cleared.', 'bot');
+}
+
+function showResumeOption() {
+    const resumeContainer = document.getElementById('resume-container');
+    resumeContainer.style.display = 'block';
+}
+
+function resumeWithTicket() {
+    const ticket = document.getElementById('ticket-input').value.trim();
+    if (sessions[ticket]) {
+        currentState = sessions[ticket];
+        localStorage.setItem('stepbot_current_ticket', ticket);
+        addMessage('Resuming session...', 'bot');
+        continueSession();
+        document.getElementById('resume-container').style.display = 'none';
+    } else {
+        addMessage('Invalid ticket. Please check and try again.', 'bot');
+    }
 }
 
 function showContinueOption() {
@@ -105,7 +132,26 @@ function sendMessage() {
     if (!message) return;
     addMessage(message, 'user');
     input.value = '';
-    processMessage(message);
+    showThinking();
+    setTimeout(() => {
+        hideThinking();
+        processMessage(message);
+    }, 1500); // Simulate thinking time
+}
+
+function showThinking() {
+    thinkingElement = document.createElement('div');
+    thinkingElement.className = 'message bot thinking';
+    thinkingElement.textContent = 'StepBot is thinking...';
+    document.getElementById('chat').appendChild(thinkingElement);
+    document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+}
+
+function hideThinking() {
+    if (thinkingElement) {
+        thinkingElement.remove();
+        thinkingElement = null;
+    }
 }
 
 function processMessage(message) {
@@ -142,8 +188,10 @@ function showOptions(options) {
 }
 
 function selectOption(option) {
-    currentState = { ...option, currentStep: 0 };
+    const ticket = generateTicket();
+    currentState = { ...option, currentStep: 0, ticket };
     saveState();
+    addMessage(`<div class="ticket">Your session ticket: <strong>${ticket}</strong><br>Use this to resume later.</div>`, 'bot');
     if (option.steps) {
         showMultiStep(option);
     } else {
@@ -151,6 +199,10 @@ function selectOption(option) {
         currentState = null;
         saveState();
     }
+}
+
+function generateTicket() {
+    return 'TICKET-' + Math.random().toString(36).substr(2, 9).toUpperCase();
 }
 
 function showMultiStep(option) {
@@ -182,7 +234,6 @@ function showMultiStep(option) {
         cantBtn.className = 'step-btn';
         cantBtn.onclick = () => {
             addMessage('Please try again or ask for more help.', 'bot');
-            // Perhaps offer to restart or something
             buttonsDiv.remove();
         };
         buttonsDiv.appendChild(didBtn);
