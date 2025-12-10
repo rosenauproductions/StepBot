@@ -9,7 +9,9 @@ This project is a standalone help bot designed for embedding in Canvas LMS. It u
 ## Features
 
 - Parses user questions and offers 2-6 related questions
-- Memory system with "continue where you left off" option
+- "Thinking" indicator for a more interactive feel
+- Ticket-based session memory: generates a unique ticket for multi-step sessions to resume across devices/sessions
+- Improved UI with modern styling, animations, and responsive design
 - Single-step and multi-step answers with interactive buttons
 - Easy-to-edit text file format for content management
 - Downloadable creator tool for admins to add/edit/delete help items
