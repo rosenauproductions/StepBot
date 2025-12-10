@@ -224,7 +224,7 @@ function selectOption(option) {
     copiedBtn.className = 'option-btn';
     copiedBtn.onclick = () => {
         pauseDiv.remove();
-        if (option.steps) {
+        if (option.steps && option.steps.length > 0) {
             showMultiStep(option);
         } else {
             addMessage(option.answer, 'bot');
