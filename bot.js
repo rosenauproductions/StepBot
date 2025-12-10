@@ -18,7 +18,8 @@ window.onload = async () => {
 
 async function loadHelpData() {
     const path = window.location.pathname;
-    const basePath = path.split('/').slice(0, -1).join('/') || '/';
+    const segments = path.split('/').filter(s => s);
+    const basePath = segments.length > 1 ? '/' + segments.slice(0, -1).join('/') : '';
     const helpUrl = basePath + '/help.txt';
     try {
         const response = await fetch(helpUrl);

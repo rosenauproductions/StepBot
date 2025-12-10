@@ -1,7 +1,8 @@
 // Load theme.css if exists
 async function loadTheme() {
     const path = window.location.pathname;
-    const basePath = path.split('/').slice(0, -1).join('/') || '/';
+    const segments = path.split('/').filter(s => s);
+    const basePath = segments.length > 1 ? '/' + segments.slice(0, -1).join('/') : '';
     const themeUrl = basePath + '/theme.css';
     try {
         const response = await fetch(themeUrl);
