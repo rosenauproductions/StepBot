@@ -1,0 +1,22 @@
+Question>: How do I log in to Canvas?
+Key>: login, sign in, access, password, username
+Answer>: To log in to Canvas, navigate to the login page, enter your username and password, then click the login button. If you forgot your password, use the "Forgot Password" link.
+
+Question>: How do I submit an assignment?
+Key>: submit, assignment, upload, file, due date
+Multi-Answer>: Here's how to submit an assignment in Canvas. Make sure you have your file ready.
+Step 1 of 3>: Go to the course and click on the assignment.
+Step 2 of 3>: Click the "Submit Assignment" button and upload your file.
+Step 3 of 3>: Review your submission and click "Submit" to confirm.
+
+Question>: What is Canvas?
+Key>: canvas, lms, learning management system, platform
+Answer>: Canvas is a learning management system used for online education. It allows students to access courses, submit assignments, and communicate with instructors.
+
+Question>: How do I reset my password?
+Key>: password, reset, forgot, change
+Answer>: To reset your password, click "Forgot Password" on the login page, enter your email, and follow the instructions sent to you.
+
+Question>: How do I view my grades?
+Key>: grades, scores, marks, results
+Answer>: To view your grades, go to the "Grades" tab in your course or dashboard. You can see individual assignment grades and overall course progress.

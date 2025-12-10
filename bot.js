@@ -1,0 +1,201 @@
+let helpData = [];
+let currentState = null;
+
+window.onload = async () => {
+    await loadHelpData();
+    loadState();
+    if (currentState) {
+        showContinueOption();
+    }
+};
+
+async function loadHelpData() {
+    try {
+        const response = await fetch('help.txt');
+        const text = await response.text();
+        helpData = parseHelpText(text);
+    } catch (error) {
+        console.error('Error loading help data:', error);
+    }
+}
+
+function parseHelpText(text) {
+    const blocks = text.split('\n\n').filter(block => block.trim());
+    const data = [];
+    blocks.forEach(block => {
+        const lines = block.split('\n').map(line => line.trim());
+        let item = {};
+        lines.forEach(line => {
+            if (line.startsWith('Question>:')) {
+                item.question = line.substring(11).trim();
+            } else if (line.startsWith('Key>:')) {
+                item.keys = line.substring(6).trim().split(',').map(k => k.trim().toLowerCase());
+            } else if (line.startsWith('Answer>:')) {
+                item.answer = line.substring(8).trim();
+            } else if (line.startsWith('Multi-Answer>:')) {
+                item.multiAnswer = line.substring(14).trim();
+            } else if (line.match(/^Step \d+ of \d+>:/)) {
+                if (!item.steps) item.steps = [];
+                const stepText = line.split('>:')[1].trim();
+                item.steps.push(stepText);
+            }
+        });
+        if (item.question) data.push(item);
+    });
+    return data;
+}
+
+function loadState() {
+    const saved = localStorage.getItem('stepbot_state');
+    if (saved) {
+        currentState = JSON.parse(saved);
+    }
+}
+
+function saveState() {
+    if (currentState) {
+        localStorage.setItem('stepbot_state', JSON.stringify(currentState));
+    } else {
+        localStorage.removeItem('stepbot_state');
+    }
+}
+
+function clearMemory() {
+    currentState = null;
+    saveState();
+    addMessage('Memory cleared.', 'bot');
+}
+
+function showContinueOption() {
+    addMessage(`You have an ongoing session: "${currentState.question}". Do you want to continue?`, 'bot');
+    const optionsDiv = document.createElement('div');
+    optionsDiv.className = 'options';
+    const yesBtn = document.createElement('button');
+    yesBtn.textContent = 'Yes, continue';
+    yesBtn.className = 'option-btn continue-btn';
+    yesBtn.onclick = () => {
+        continueSession();
+        optionsDiv.remove();
+    };
+    const noBtn = document.createElement('button');
+    noBtn.textContent = 'No, start new';
+    noBtn.className = 'option-btn';
+    noBtn.onclick = () => {
+        currentState = null;
+        saveState();
+        addMessage('Starting new session.', 'bot');
+        optionsDiv.remove();
+    };
+    optionsDiv.appendChild(yesBtn);
+    optionsDiv.appendChild(noBtn);
+    document.getElementById('chat').appendChild(optionsDiv);
+}
+
+function continueSession() {
+    if (currentState.multiAnswer) {
+        showMultiStep(currentState);
+    } else {
+        addMessage(currentState.answer, 'bot');
+    }
+}
+
+function sendMessage() {
+    const input = document.getElementById('input');
+    const message = input.value.trim();
+    if (!message) return;
+    addMessage(message, 'user');
+    input.value = '';
+    processMessage(message);
+}
+
+function processMessage(message) {
+    const matches = findMatches(message.toLowerCase());
+    if (matches.length === 0) {
+        addMessage('Sorry, I couldn\'t find relevant help. Try rephrasing your question.', 'bot');
+        return;
+    }
+    showOptions(matches.slice(0, 6)); // up to 6
+}
+
+function findMatches(query) {
+    const words = query.split(/\s+/);
+    return helpData.filter(item => {
+        return item.keys.some(key => words.some(word => key.includes(word) || word.includes(key)));
+    });
+}
+
+function showOptions(options) {
+    addMessage('Here are some related questions:', 'bot');
+    const optionsDiv = document.createElement('div');
+    optionsDiv.className = 'options';
+    options.forEach(option => {
+        const btn = document.createElement('button');
+        btn.textContent = option.question;
+        btn.className = 'option-btn';
+        btn.onclick = () => {
+            selectOption(option);
+            optionsDiv.remove();
+        };
+        optionsDiv.appendChild(btn);
+    });
+    document.getElementById('chat').appendChild(optionsDiv);
+}
+
+function selectOption(option) {
+    currentState = { ...option, currentStep: 0 };
+    saveState();
+    if (option.steps) {
+        showMultiStep(option);
+    } else {
+        addMessage(option.answer, 'bot');
+        currentState = null;
+        saveState();
+    }
+}
+
+function showMultiStep(option) {
+    if (currentState.currentStep === 0) {
+        addMessage(option.multiAnswer, 'bot');
+    }
+    const stepIndex = currentState.currentStep;
+    if (stepIndex < option.steps.length) {
+        addMessage(`Step ${stepIndex + 1} of ${option.steps.length}: ${option.steps[stepIndex]}`, 'bot');
+        const buttonsDiv = document.createElement('div');
+        buttonsDiv.className = 'options';
+        const didBtn = document.createElement('button');
+        didBtn.textContent = 'I did this';
+        didBtn.className = 'step-btn';
+        didBtn.onclick = () => {
+            currentState.currentStep++;
+            saveState();
+            if (currentState.currentStep < option.steps.length) {
+                showMultiStep(option);
+            } else {
+                addMessage('Great! You\'ve completed all steps.', 'bot');
+                currentState = null;
+                saveState();
+            }
+            buttonsDiv.remove();
+        };
+        const cantBtn = document.createElement('button');
+        cantBtn.textContent = 'I can\'t do this';
+        cantBtn.className = 'step-btn';
+        cantBtn.onclick = () => {
+            addMessage('Please try again or ask for more help.', 'bot');
+            // Perhaps offer to restart or something
+            buttonsDiv.remove();
+        };
+        buttonsDiv.appendChild(didBtn);
+        buttonsDiv.appendChild(cantBtn);
+        document.getElementById('chat').appendChild(buttonsDiv);
+    }
+}
+
+function addMessage(text, type) {
+    const chat = document.getElementById('chat');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `message ${type}`;
+    msgDiv.innerHTML = text; // Allow HTML
+    chat.appendChild(msgDiv);
+    chat.scrollTop = chat.scrollHeight;
+}
