@@ -22,6 +22,11 @@ This project is a standalone help bot designed for embedding in Canvas LMS. It u
 
 ## Text File Format
 
+### Welcome Message (optional):
+```
+Welcome>: Your welcome message here.
+```
+
 ### Single Step Answer:
 ```
 Question>: Question title
