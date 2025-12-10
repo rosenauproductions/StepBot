@@ -10,11 +10,14 @@ This project is a standalone help bot designed for embedding in Canvas LMS. It u
 
 - Parses user questions and offers 2-6 related questions
 - "Thinking" indicator for a more interactive feel
-- Ticket-based session memory: generates a unique ticket for multi-step sessions to resume across devices/sessions
+- Ticket-based session memory with enforced copying: generates a unique ticket for multi-step sessions to resume across devices/sessions
 - Improved UI with modern styling, animations, and responsive design
 - Single-step and multi-step answers with interactive buttons
 - Easy-to-edit text file format for content management
-- Downloadable creator tool for admins to add/edit/delete help items
+- Admin panel at `/admin` with question editor and theme generator
+- Theme support with customizable colors, fonts, logo, and title
+- Multi-site deployment: supports custom content per subdirectory (e.g., /site1 uses /site1/help.txt and /site1/theme.css)
+- Downloadable tools for admins to customize and export content/themes
 - HTML formatting support in answers and steps
 
 ## Text File Format

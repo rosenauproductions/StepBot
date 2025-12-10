@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StepBot Question Editor</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        .container { max-width: 1200px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; }
+        .item { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .item h3 { margin-top: 0; color: #007bff; }
+        .form-group { margin: 10px 0; }
+        label { display: block; font-weight: bold; }
+        input, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .steps { margin-left: 20px; }
+        .step-item { margin: 5px 0; }
+        button { padding: 10px 15px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .add-btn { background-color: #28a745; color: white; }
+        .delete-btn { background-color: #dc3545; color: white; }
+        .save-btn { background-color: #007bff; color: white; }
+        .add-step-btn { background-color: #17a2b8; color: white; }
+        .download-btn { background-color: #ffc107; color: black; }
+        .toggle-btn { background-color: #6c757d; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>StepBot Question Editor</h1>
+        <button onclick="loadQuestions()" class="save-btn">Load Current Questions</button>
+        <button onclick="addQuestion()" class="add-btn">Add New Question</button>
+        <button onclick="downloadQuestions()" class="download-btn">Download Updated Questions</button>
+        <div id="questions"></div>
+    </div>
+
+    <script>
+        let questions = [];
+
+        async function loadQuestions() {
+            try {
+                const response = await fetch('../help.txt');
+                const text = await response.text();
+                questions = parseQuestions(text);
+                displayQuestions();
+            } catch (error) {
+                alert('Error loading questions: ' + error.message);
+            }
+        }
+
+        function parseQuestions(text) {
+            const blocks = text.split('\n\n').filter(block => block.trim());
+            const data = [];
+            blocks.forEach(block => {
+                const lines = block.split('\n').map(line => line.trim());
+                let item = { question: '', keys: '', answer: '', multiAnswer: '', steps: [] };
+                lines.forEach(line => {
+                    if (line.startsWith('Question>:')) {
+                        item.question = line.substring(11).trim();
+                    } else if (line.startsWith('Key>:')) {
+                        item.keys = line.substring(6).trim();
+                    } else if (line.startsWith('Answer>:')) {
+                        item.answer = line.substring(8).trim();
+                    } else if (line.startsWith('Multi-Answer>:')) {
+                        item.multiAnswer = line.substring(14).trim();
+                    } else if (line.match(/^Step \d+ of \d+>:/)) {
+                        const stepText = line.split('>:')[1].trim();
+                        item.steps.push(stepText);
+                    }
+                });
+                if (item.question) data.push(item);
+            });
+            return data;
+        }
+
+        function displayQuestions() {
+            const container = document.getElementById('questions');
+            container.innerHTML = '';
+            questions.forEach((q, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'item';
+                itemDiv.innerHTML = `
+                    <h3>Question ${index + 1}</h3>
+                    <div class="form-group">
+                        <label>Question Title:</label>
+                        <input type="text" value="${q.question}" onchange="updateQuestion(${index}, 'question', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Keywords (comma separated):</label>
+                        <input type="text" value="${q.keys}" onchange="updateQuestion(${index}, 'keys', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Type:</label>
+                        <button onclick="toggleType(${index})" class="toggle-btn">${q.steps.length > 0 ? 'Multi-Step' : 'Single Answer'}</button>
+                    </div>
+                    ${q.steps.length > 0 ? `
+                        <div class="form-group">
+                            <label>Multi-Answer Intro:</label>
+                            <textarea onchange="updateQuestion(${index}, 'multiAnswer', this.value)">${q.multiAnswer}</textarea>
+                        </div>
+                        <div class="steps">
+                            <label>Steps:</label>
+                            ${q.steps.map((step, i) => `
+                                <div class="step-item">
+                                    <input type="text" value="${step}" onchange="updateStep(${index}, ${i}, this.value)">
+                                    <button onclick="removeStep(${index}, ${i})" class="delete-btn">Remove</button>
+                                </div>
+                            `).join('')}
+                            <button onclick="addStep(${index})" class="add-step-btn">Add Step</button>
+                        </div>
+                    ` : `
+                        <div class="form-group">
+                            <label>Answer:</label>
+                            <textarea onchange="updateQuestion(${index}, 'answer', this.value)">${q.answer}</textarea>
+                        </div>
+                    `}
+                    <button onclick="deleteQuestion(${index})" class="delete-btn">Delete Question</button>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+
+        function updateQuestion(index, field, value) {
+            questions[index][field] = value;
+        }
+
+        function updateStep(index, stepIndex, value) {
+            questions[index].steps[stepIndex] = value;
+        }
+
+        function addQuestion() {
+            questions.push({ question: '', keys: '', answer: '', multiAnswer: '', steps: [] });
+            displayQuestions();
+        }
+
+        function deleteQuestion(index) {
+            questions.splice(index, 1);
+            displayQuestions();
+        }
+
+        function toggleType(index) {
+            const q = questions[index];
+            if (q.steps.length > 0) {
+                // Convert to single
+                q.steps = [];
+                q.multiAnswer = '';
+            } else {
+                // Convert to multi
+                q.steps = ['Step 1'];
+                q.multiAnswer = 'Follow these steps:';
+                q.answer = '';
+            }
+            displayQuestions();
+        }
+
+        function addStep(index) {
+            questions[index].steps.push(`Step ${questions[index].steps.length + 1}`);
+            displayQuestions();
+        }
+
+        function removeStep(index, stepIndex) {
+            questions[index].steps.splice(stepIndex, 1);
+            displayQuestions();
+        }
+
+        function downloadQuestions() {
+            let text = '';
+            questions.forEach(q => {
+                if (q.question.trim()) {
+                    text += `Question>: ${q.question}\n`;
+                    text += `Key>: ${q.keys}\n`;
+                    if (q.steps.length > 0) {
+                        text += `Multi-Answer>: ${q.multiAnswer}\n`;
+                        q.steps.forEach((step, i) => {
+                            text += `Step ${i + 1} of ${q.steps.length}>: ${step}\n`;
+                        });
+                    } else {
+                        text += `Answer>: ${q.answer}\n`;
+                    }
+                    text += '\n';
+                }
+            });
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'help.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

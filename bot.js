@@ -13,12 +13,23 @@ window.onload = async () => {
 };
 
 async function loadHelpData() {
+    const path = window.location.pathname;
+    const basePath = path.split('/').slice(0, -1).join('/') || '/';
+    const helpUrl = basePath + '/help.txt';
     try {
-        const response = await fetch('help.txt');
+        const response = await fetch(helpUrl);
         const text = await response.text();
         helpData = parseHelpText(text);
     } catch (error) {
         console.error('Error loading help data:', error);
+        // Fallback to root
+        try {
+            const response = await fetch('/help.txt');
+            const text = await response.text();
+            helpData = parseHelpText(text);
+        } catch (fallbackError) {
+            console.error('Fallback error:', fallbackError);
+        }
     }
 }
 
@@ -191,14 +202,24 @@ function selectOption(option) {
     const ticket = generateTicket();
     currentState = { ...option, currentStep: 0, ticket };
     saveState();
-    addMessage(`<div class="ticket">Your session ticket: <strong>${ticket}</strong><br>Use this to resume later.</div>`, 'bot');
-    if (option.steps) {
-        showMultiStep(option);
-    } else {
-        addMessage(option.answer, 'bot');
-        currentState = null;
-        saveState();
-    }
+    addMessage(`<div class="ticket">Your session ticket: <strong>${ticket}</strong><br>Please copy this ticket for later use.</div>`, 'bot');
+    const pauseDiv = document.createElement('div');
+    pauseDiv.className = 'options';
+    const copiedBtn = document.createElement('button');
+    copiedBtn.textContent = 'I have copied this';
+    copiedBtn.className = 'option-btn';
+    copiedBtn.onclick = () => {
+        pauseDiv.remove();
+        if (option.steps) {
+            showMultiStep(option);
+        } else {
+            addMessage(option.answer, 'bot');
+            currentState = null;
+            saveState();
+        }
+    };
+    pauseDiv.appendChild(copiedBtn);
+    document.getElementById('chat').appendChild(pauseDiv);
 }
 
 function generateTicket() {
